@@ -2,8 +2,8 @@ import random as rn
 import numpy as np
 #import matplotlib.pyplot as plt
 
-class Perceptron2D:
-    "Perceptron de 2 Dimensiones"
+class Adaline2D:
+    "Adaline de 2 Dimensiones"
 
     def __init__(self):
         self.init()
@@ -47,19 +47,19 @@ class Perceptron2D:
     def train(self, learningRate, epochsMax):
         self.__arrangeData()
         self.eta = learningRate
-        self.done = False
-        while not self.done and self.epochs < epochsMax:
-            error_count = 0
-            self.done = True
+        while self.epochs < epochsMax:
+            error = 0
             self.epochs += 1
             for j in range(len(self.__trainingSet)):
-                error = self.output[j] - self.__pw(self.__trainingSet[j])
-                if error != 0:
-                    error_count += 1
-                    self.done = False
-                    self.wdata += self.eta * error * self.__trainingSet[j]
-                    print(self.wdata)
-            self.avgErrors.append(error_count / len(self.__trainingSet))
+                error += self.output[j] - np.dot(self.__trainingSet[j], self.wdata)
+                "self.wdata += self.eta * error * (self.__trainingSet[j]/np.linalg.norm(self.__trainingSet)) Segun esto dividir entre la norma del vector afecta todos los x, pero tiene mas margen de error"
+                self.wdata += self.eta * error * self.__trainingSet[j]
+                print('Pesos: ')
+                print(self.wdata)
+                print('Error: ')
+                print(error)
+            self.avgErrors.append(error / len(self.__trainingSet))
+
 
     def printOutput(self):
         print("Training set and output : ")

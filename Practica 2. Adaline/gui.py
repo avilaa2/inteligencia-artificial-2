@@ -1,7 +1,7 @@
 import numpy as np
 import random as rn
 import tkinter as tk
-from ia2 import Perceptron2D
+from ia2 import Adaline2D
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -95,7 +95,7 @@ class MainApplication(tk.Frame):
         self.graphFrame = tk.Frame(parent)
         self.inputSection = InputSection(parent)
         self.eGraphSection = GraphSection(self.graphFrame, 'Error')
-        self.tGraphSection = GraphSection(self.graphFrame, 'Perceptron')
+        self.tGraphSection = GraphSection(self.graphFrame, 'Adaline')
 
         self.inputSection.pack(side="top")
         self.tGraphSection.pack(side="left")
@@ -107,7 +107,7 @@ class MainApplication(tk.Frame):
         self.inputSection.pack(fill='x')
         self.graphFrame.pack()
 
-        self.perceptron = Perceptron2D()
+        self.adaline = Adaline2D()
 
     def init(self):
         self.data = []
@@ -117,7 +117,7 @@ class MainApplication(tk.Frame):
         xdata = np.arange(-10, 10, 0.1)
 
         self.tGraphSection.ax.cla()
-        self.tGraphSection.init(xdata, self.perceptron.rectaRand(xdata))
+        self.tGraphSection.init(xdata, self.adaline.rectaRand(xdata))
 
         self.eGraphSection.ax.cla()
         self.eGraphSection.init(np.arange(0, 10), np.arange(0, 10))
@@ -126,34 +126,34 @@ class MainApplication(tk.Frame):
 
 
     def train(self, event):
-        self.perceptron.wdata = np.array([rn.random(), rn.random(), rn.random()])
+        self.adaline.wdata = np.array([rn.random(), rn.random(), rn.random()])
 
         for i in range(len(self.data)):
-            self.perceptron.xdata.append(self.data[i][0])
-            self.perceptron.ydata.append(self.data[i][1])
-            self.perceptron.output.append(self.output[i])
-        self.perceptron.train(self.inputSection.learningRate, self.inputSection.epochsMax)
+            self.adaline.xdata.append(self.data[i][0])
+            self.adaline.ydata.append(self.data[i][1])
+            self.adaline.output.append(self.output[i])
+        self.adaline.train(self.inputSection.learningRate, self.inputSection.epochsMax)
 
         xdata = np.arange(-10, 10, 0.1)
         self.tGraphSection.line.set_xdata(xdata)
-        self.tGraphSection.line.set_ydata(self.perceptron.recta(xdata))
+        self.tGraphSection.line.set_ydata(self.adaline.recta(xdata))
         self.tGraphSection.canvas.draw()
 
-        for i in self.perceptron.avgErrors:
+        for i in self.adaline.avgErrors:
             print(i)
 
-        self.eGraphSection.ax.set_xlim([0, len(self.perceptron.avgErrors)])
+        self.eGraphSection.ax.set_xlim([0, len(self.adaline.avgErrors)])
         self.eGraphSection.ax.set_ylim([0, 1])
-        self.eGraphSection.line.set_xdata([i for i in range(len(self.perceptron.avgErrors))])
-        self.eGraphSection.line.set_ydata(self.perceptron.avgErrors)
+        self.eGraphSection.line.set_xdata([i for i in range(len(self.adaline.avgErrors))])
+        self.eGraphSection.line.set_ydata(self.adaline.avgErrors)
         self.eGraphSection.canvas.draw()
 
-        if self.perceptron.done == True:
+        if self.adaline.done:
             MyDialog(self.graphFrame, 'Es linealmente separable')
         else:
             MyDialog(self.graphFrame, 'No es linealmente separable')
 
-        self.perceptron.init()
+        self.adaline.init()
 
 
     def onclick(self, event):
