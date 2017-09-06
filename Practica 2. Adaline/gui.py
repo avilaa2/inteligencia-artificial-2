@@ -1,7 +1,11 @@
 import numpy as np
 import random as rn
 import tkinter as tk
+<<<<<<< HEAD
 from ia2 import Adaline2D
+=======
+from ia2 import Adaline
+>>>>>>> Adaline-interfaz
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -35,10 +39,12 @@ class InputSection(tk.Frame):
         self.columnconfigure(11, weight=1)
 
         self.epochsMax = 100
+        self.targetError = 0.001
         self.learningRate = 0.1
 
         tk.Label(self, bg="white", text="Learn Rate").grid(row=0, column=0, sticky='e')
         tk.Label(self, bg="white", text="Num Epocas").grid(row=1, column=0, sticky='e')
+        tk.Label(self, bg="white", text="Error deseado").grid(row=2, column=0, sticky='e')
 
         self.learn_entry = tk.Entry(self, bg="white", bd=2, validate="key", validatecommand=(vcmd, '%P', 'float', 'self.learningRate'))
         self.learn_entry.grid(row=0, column=1)
@@ -46,8 +52,11 @@ class InputSection(tk.Frame):
         self.epoca_entry = tk.Entry(self, bg="white", bd=2, validate="key", validatecommand=(vcmd, '%P', 'int', 'self.epochsMax'))
         self.epoca_entry.grid(row=1, column=1)
 
+        self.error_entry = tk.Entry(self, bg="white", bd=2, validate="key",validatecommand=(vcmd, '%P', 'float', 'self.targetError'))
+        self.error_entry.grid(row=2, column=1)
+
         self.button_start = tk.Button(self, text="Start")
-        self.button_start.grid(row=2, column=1)
+        self.button_start.grid(row=3, column=1)
 
         self.button_train = tk.Button(self, text="Train")
         self.button_train.grid(row=0, column=8, rowspan=3)
@@ -56,6 +65,7 @@ class InputSection(tk.Frame):
         if not input:  # the field is being cleared
             self.epochsMax = 100
             self.learningRate = 0.1
+            self.targetError = 0.001
             return True
 
         try:
@@ -107,7 +117,11 @@ class MainApplication(tk.Frame):
         self.inputSection.pack(fill='x')
         self.graphFrame.pack()
 
+<<<<<<< HEAD
         self.adaline = Adaline2D()
+=======
+        self.adaline = Adaline()
+>>>>>>> Adaline-interfaz
 
     def init(self):
         self.data = []
@@ -132,7 +146,11 @@ class MainApplication(tk.Frame):
             self.adaline.xdata.append(self.data[i][0])
             self.adaline.ydata.append(self.data[i][1])
             self.adaline.output.append(self.output[i])
+<<<<<<< HEAD
         self.adaline.train(self.inputSection.learningRate, self.inputSection.epochsMax)
+=======
+        self.adaline.train(self.inputSection.learningRate, self.inputSection.epochsMax, self.inputSection.targetError)
+>>>>>>> Adaline-interfaz
 
         xdata = np.arange(-10, 10, 0.1)
         self.tGraphSection.line.set_xdata(xdata)
@@ -143,15 +161,27 @@ class MainApplication(tk.Frame):
             print(i)
 
         self.eGraphSection.ax.set_xlim([0, len(self.adaline.avgErrors)])
+<<<<<<< HEAD
         self.eGraphSection.ax.set_ylim([0, 1])
+=======
+        self.eGraphSection.ax.set_ylim([0, np.max(self.adaline.avgErrors)])
+>>>>>>> Adaline-interfaz
         self.eGraphSection.line.set_xdata([i for i in range(len(self.adaline.avgErrors))])
         self.eGraphSection.line.set_ydata(self.adaline.avgErrors)
         self.eGraphSection.canvas.draw()
 
+<<<<<<< HEAD
         if self.adaline.done:
+=======
+        self.adaline.verify()
+        '''
+        if self.adaline.done == True:
+>>>>>>> Adaline-interfaz
             MyDialog(self.graphFrame, 'Es linealmente separable')
         else:
             MyDialog(self.graphFrame, 'No es linealmente separable')
+        '''
+
 
         self.adaline.init()
 
