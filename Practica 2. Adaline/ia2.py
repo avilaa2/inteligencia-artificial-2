@@ -20,9 +20,9 @@ class Adaline2D:
         self.__trainingSet = []
         self.done = True
 
-    def __pw(self,x):
+    def __pw(self,net):
         "Funcion de activacion"
-        if np.dot(x,self.wdata) >= 0:
+        if net >= 0:
             return 1
         return 0
 
@@ -51,14 +51,20 @@ class Adaline2D:
             error = 0
             self.epochs += 1
             for j in range(len(self.__trainingSet)):
-                error += self.output[j] - np.dot(self.__trainingSet[j], self.wdata)
-                "self.wdata += self.eta * error * (self.__trainingSet[j]/np.linalg.norm(self.__trainingSet)) Segun esto dividir entre la norma del vector afecta todos los x, pero tiene mas margen de error"
-                self.wdata += self.eta * error * self.__trainingSet[j]
+                net = np.dot(self.__trainingSet[j], self.wdata)
+                error += self.output[j] - net
+                "Segun esto dividir entre la norma del vector afecta todos los x, pero tiene mas margen de error"
+                self.wdata += self.eta * error * (self.__trainingSet[j]/np.linalg.norm(self.__trainingSet))
+                '''self.wdata += self.eta * error * self.__trainingSet[j]'''
                 print('Pesos: ')
                 print(self.wdata)
                 print('Error: ')
                 print(error)
-            self.avgErrors.append(error / len(self.__trainingSet))
+            self.avgErrors.append(error)
+        if self.__pw(net) == 0:
+            self.done = False;
+        else:
+            self.done = True;
 
 
     def printOutput(self):
