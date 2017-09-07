@@ -143,7 +143,7 @@ class MainApplication(tk.Frame):
             print(i)
 
         self.eGraphSection.ax.set_xlim([0, len(self.adaline.avgErrors)])
-        self.eGraphSection.ax.set_ylim([0, 1])
+        self.eGraphSection.ax.set_ylim([0, 2])
         self.eGraphSection.line.set_xdata([i for i in range(len(self.adaline.avgErrors))])
         self.eGraphSection.line.set_ydata(self.adaline.avgErrors)
         self.eGraphSection.canvas.draw()

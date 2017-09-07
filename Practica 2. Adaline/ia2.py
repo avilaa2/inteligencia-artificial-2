@@ -1,5 +1,6 @@
 import random as rn
 import numpy as np
+import math
 #import matplotlib.pyplot as plt
 
 class Adaline2D:
@@ -44,27 +45,29 @@ class Adaline2D:
         self.wdata = np.array([rn.random(), rn.random(), rn.random()])
         return self.recta(x_sample)
 
+    def sigmoid(self,y):
+        return 1 / (1 + math.exp(-y))
+
     def train(self, learningRate, epochsMax):
         self.__arrangeData()
         self.eta = learningRate
+        self.done = False
+        errorAcumulado = 999
         while self.epochs < epochsMax:
-            error = 0
+            errorAcumulado = 0
             self.epochs += 1
             for j in range(len(self.__trainingSet)):
                 net = np.dot(self.__trainingSet[j], self.wdata)
-                error += self.output[j] - net
-                "Segun esto dividir entre la norma del vector afecta todos los x, pero tiene mas margen de error"
-                self.wdata += self.eta * error * (self.__trainingSet[j]/np.linalg.norm(self.__trainingSet))
-                '''self.wdata += self.eta * error * self.__trainingSet[j]'''
+                error = self.output[j] - self.sigmoid(net)
+                errorAcumulado += error
+                self.wdata += self.eta * errorAcumulado * self.sigmoid(net) * (1 - self.sigmoid(net)) * self.__trainingSet[j]
                 print('Pesos: ')
                 print(self.wdata)
-                print('Error: ')
-                print(error)
-            self.avgErrors.append(error)
-        if self.__pw(net) == 0:
-            self.done = False;
-        else:
-            self.done = True;
+            self.avgErrors.append(errorAcumulado)
+            print('Error: ')
+            print(errorAcumulado)
+        if errorAcumulado < 0.5:
+            self.done = True
 
 
     def printOutput(self):
