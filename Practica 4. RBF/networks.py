@@ -7,30 +7,26 @@ class RBFNetwork:
         self.k = k
         self.tolerance = tolerance
         self.max_iterations = max_iterations
-
-    def __gaussian(self, x, c, a):
-        print(x)
-        print(c)
-        print(a)
-        print(np.exp(np.power(-np.linalg.norm(x - c), 2)))
-        bias = 1
-        return np.exp(np.power(-np.linalg.norm(x - c), 2)) + bias
-
-
-    def __calculateOutput(self):
-        output = []
-        for classification in self.classes:
-            x = self.classes[classification]
-            c = self.centroids[classification]
-            a = self.spreads[classification]
-            print('Max')
-            print(np.max(self.classes[classification], axis=0))
-            output.append(self.__gaussian(x, c, a))
-        return np.array(output)
-
-    def fit(self, data):
-        self.centroids = {}
         self.spreads = {}
+
+    def __gaussian(self, x, d, sigma):
+        r = np.linalg.norm(x - d)
+        return np.exp( -(np.power(r, 2)) / (2 * np.power(sigma, 2)))
+
+    def test(self, x):
+        self.result = []
+        for i in range(len(x)):
+            output = []
+            for classification in self.classes:
+                d = self.centroids[classification]
+                sigma = self.spreads[classification]
+                output.append(self.__gaussian(x[i], d, sigma))
+            self.result.append(output)
+        return self.result
+
+
+    def train(self, data):
+        self.centroids = {}
 
         # initialize the centroids, the first 'k' elements in the dataset will be our initial centroids
         for i in range(self.k):
@@ -53,60 +49,25 @@ class RBFNetwork:
             # average the cluster datapoints to re-calculate the centroids
             for classification in self.classes:
                 self.centroids[classification] = np.average(self.classes[classification], axis=0)
-                self.spreads[classification] = np.max(self.classes[classification], axis=0) - self.centroids[classification]
 
-            isOptimal = True
+            # break out of the main loop if the results are optimal, ie. the centroids don't change their positions much(more than our tolerance)
+            if np.equal(previous, self.centroids):
+                break
 
-            print(self.centroids)
+        # Set Spreads
+        for i in self.classes:
+            distances = []
+            for j in self.classes:
+                if i != j:
+                    distances += [np.linalg.norm(self.centroids[i] - self.centroids[j])]
+            self.spreads[i] = min(distances)
 
-            for centroid in self.centroids:
+        for classification in self.classes:
+            print('class: {} , data: {}'.format(classification, self.classes[classification]))
 
-                original_centroid = previous[centroid]
-                curr = self.centroids[centroid]
-
-                print(original_centroid)
-                print(curr)
-
-                #if np.sum((curr - original_centroid) / original_centroid * 100.0) > self.tolerance:
-                    #isOptimal = False
-
-            #break out of the main loop if the results are optimal, ie. the centroids don't change their positions much(more than our tolerance)
-            #if isOptimal:
-                #break
-
-            if True:
-                return self.__calculateOutput()
+        return self.test(data)
 
     def pred(self, data):
         distances = [np.linalg.norm(data - self.centroids[centroid]) for centroid in self.centroids]
         classification = distances.index(min(distances))
         return classification
-
-'''
-def main():
-    df = pd.read_csv(r"./data/ipl.csv")
-    df = df[['one', 'two']]
-    dataset = df.astype(float).values.tolist()
-
-    X = df.values  # returns a numpy array
-
-    km = RBFNetwork(3)
-    km.fit(X)
-
-    # Plotting starts here
-    colors = 10 * ["r", "g", "c", "b", "k"]
-
-    for centroid in km.centroids:
-        plt.scatter(km.centroids[centroid][0], km.centroids[centroid][1], s=130, marker="x")
-
-    for classification in km.classes:
-        color = colors[classification]
-        for features in km.classes[classification]:
-            plt.scatter(features[0], features[1], color=color, s=30)
-
-    plt.show()
-
-
-if __name__ == "__main__":
-    main()
-'''

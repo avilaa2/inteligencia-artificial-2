@@ -4,7 +4,8 @@ import random as rn
 #import tkinter as tk
 from tkinter import *
 from networks import RBFNetwork
-from ia2 import Adaline1D
+from ia2 import Adaline
+import math as math
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
@@ -27,13 +28,12 @@ class InputSection(Frame):
     def __init__(self, master):
         Frame.__init__(self, master, bg='white')
         vars = {}
-        vars['layer1'] = 8
-        vars['layer2'] = 4
-        vars['epochsMax'] = 100
+        vars['epochsMax'] = 300
+        vars['clusters'] = 3
         vars['xPoint'] = 0.0
         vars['yPoint'] = 0.0
-        vars['targetError'] = 0.1
-        vars['learningRate'] = 0.001
+        vars['targetError'] = 0.000001
+        vars['learningRate'] = 1.0
 
         print('Inicializando Variables')
         for key, value in vars.items():
@@ -45,14 +45,25 @@ class InputSection(Frame):
     def initUI(self):
         vcmd = self.register(self.validate)
 
+
+        # Options for class_list
+        self.options = {
+            "Coseno": 'self.cos()',
+            "Seno": 'self.sin()',
+            "Quadratic": 'self.quadratic()',
+            "Cube": 'self.cube()',
+            "2sin(x) + cos(3x)": 'self.mathFunc1()',
+            "sin(2x) + ln(x^2)": 'self.mathFunc2()'
+        }
+
         Label(self, text="Learn Rate:").grid(pady=5, row=0, column=0)
         Label(self, text="Num Epochs:").grid(pady=5, row=1, column=0)
         Label(self, text="target Error:").grid(pady=5, row=2, column=0)
-        Label(self, text="Layer 1:").grid(pady=5, row=0, column=2)
-        Label(self, text="Layer 2:").grid(pady=5, row=1, column=2)
-        Label(self, text="x:").grid(pady=5, row=0, column=4)
-        Label(self, text="y:").grid(pady=5, row=1, column=4)
-        Label(self, text="class:").grid(pady=5, row=0, column=6)
+        Label(self, text="Clusters:").grid(pady=5, row=0, column=2)
+        Label(self, text="Functions:").grid(pady=5, row=1, column=2)
+
+        self.key = StringVar(self)
+        self.key.set('Coseno')
 
         self.learn_entry = Entry(self, validate="key", vcmd=(vcmd, '%P', 'float', 'learningRate'))
         self.learn_entry.grid(padx=5, row=0, column=1)
@@ -60,27 +71,16 @@ class InputSection(Frame):
         self.epoca_entry.grid(padx=5, row=1, column=1)
         self.error_entry = Entry(self, validate="key", vcmd=(vcmd, '%P', 'float', 'targetError'))
         self.error_entry.grid(padx=5, row=2, column=1)
+        self.clusters_entry = Entry(self, validate="key", vcmd=(vcmd, '%P', 'int', 'clusters'))
+        self.clusters_entry.grid(padx=5, row=0, column=3)
         self.button_start = Button(self, text="Start")
         self.button_start.grid(padx=5, row=3, column=1)
-
-        self.first_layer = Entry(self, validate="key", vcmd=(vcmd, '%P', 'int', 'layer1'))
-        self.first_layer.grid(padx=5, row=0, column=3)
-        self.second_layer = Entry(self, validate="key", vcmd=(vcmd, '%P', 'int', 'layer2'))
-        self.second_layer.grid(padx=5, row=1, column=3)
+        self.class_list = OptionMenu(self, self.key, *self.options.keys())
+        self.class_list.grid(padx=5, row=1, column=3)
         self.button_train = Button(self, text="Train")
         self.button_train.grid(row=2, column=3)
 
-        #self.x_coordinate = Entry(self, validate="key", vcmd=(vcmd, '%P', 'float', 'xPoint'))
-        #self.x_coordinate.grid(padx=5, row=0, column=5)
-        #self.y_coordinate = Entry(self, validate="key", vcmd=(vcmd, '%P', 'float', 'yPoint'))
-        #self.y_coordinate.grid(padx=5, row=1, column=5)
-        #self.button_test = Button(self, text="Test")
-        #self.button_test.grid(row=3, column=3)
 
-        #Options for class_list
-        options = {"Red": 0, "Green": 1, "Blue": 2, "Yellow": 3}
-        self.class_list = OptionMenu(self, StringVar(self), *options.keys())
-        self.class_list.grid(padx=5, row=0, column=7)
 
 
     #TODO add pcolor to GUI
@@ -90,6 +90,7 @@ class InputSection(Frame):
             exec ("self.{}={}".format(var, vars[var]))
             return True
         try:
+            print("self.{}={}('{}')".format(var, type, input))
             exec("self.{}={}('{}')".format(var, type, input))
             return True
         except ValueError:
@@ -97,25 +98,30 @@ class InputSection(Frame):
 
 class GraphSection(Frame):
     def __init__(self, master = None, legend = 'Default', figWidth = 8, figHeight = 8):
+        self.master = master
+        self.legend = legend
+        self.figWith = figWidth
+        self.figHeigt = figHeight
         self.initUI(master, legend, (figWidth, figHeight))
+
 
     def initUI(self, master, legend, figSize):
         Frame.__init__(self, master)
         self.line = None
+        self.line2 = None
         self.legend = legend
         self.fig = plt.figure(figsize=figSize)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self)
         self.canvas.get_tk_widget().pack(side='bottom', expand=False)
 
         if legend == 'Adaline':
-            x = np.arange(0, 1, 0.1)
+            x = np.arange(-10, 10, 0.1)
             self.ax = self.fig.add_subplot(111)
             self.ax.set_xlim([-1, 1])
             self.ax.set_ylim([-10, 10])
-            self.init(x, np.cos(2*np.pi*x))
+            self.init(x, np.cos(x))
         else:
-            self.ax = self.fig.add_subplot(211)
-            self.ax2 = self.fig.add_subplot(212)
+            self.ax = self.fig.add_subplot(111)
             self.init(np.arange(0, 10, 1), np.arange(0, 1, 0.1))
 
     def init(self, xdata, ydata):
@@ -129,9 +135,10 @@ class GraphSection(Frame):
         self.canvas.draw()
 
     def drawLine(self, x, y):
+        self.ax.set_xlim([min(x), max(x)])
+        self.ax.set_ylim([min(y), max(y)])
         if self.line is None:
             self.line, = self.ax.plot(x, y, label=self.legend)
-            print(self.line)
         else:
             self.line.set_xdata(x)
             self.line.set_ydata(y)
@@ -158,22 +165,43 @@ class MainApplication(Frame):
         self.inputSection.pack(fill='x')
         self.graphFrame.pack()
 
-        self.adaline = Adaline1D()
+        self.xdata = np.arange(-10, 10, 0.1)
+        self.ydata = np.cos(self.xdata)
 
     def __drawPoint(self, id, point, color, marker):
         self.output.append(id)
         self.tGraphSection.ax.scatter(point['x'], point['y'], point['z'], c=color, marker=marker)
         self.data.append([point['x'], point['y'], point['z']])
 
+    def cos(self):
+        self.ydata = np.cos(self.xdata)
+
+    def sin(self):
+        self.ydata = np.sin(self.xdata)
+
+    def quadratic(self):
+        self.ydata = np.power(self.xdata, 2)
+
+    def cube(self):
+        self.ydata = np.power(self.xdata, 3)
+
+    def mathFunc1(self):
+        self.ydata = 2 * np.cos(self.xdata) + np.sin(3*self.xdata)
+
+    def mathFunc2(self):
+        self.ydata = np.sin(2*self.xdata) + np.log(np.power(self.xdata, 2))
+
     def init(self):
         self.data = []
         self.output = []
 
     def start(self, event):
-        xdata = np.arange(-10, 10, 0.1)
-        self.tGraphSection.ax.cla()
-        self.tGraphSection.init(xdata, np.cos(2*np.pi*xdata))
-        self.eGraphSection.ax.cla()
+        exec(self.inputSection.options[self.inputSection.key.get()])
+        #self.tGraphSection.ax.clear()
+        self.tGraphSection.drawLine(self.xdata, self.ydata)
+        self.tGraphSection.canvas.draw()
+        #self.tGraphSection.init(self.xdata, self.ydata)
+        #self.eGraphSection.ax.clear()
         self.eGraphSection.init(np.arange(10, 0, -0.1), np.arange(0, 10, 0.1))
         self.init()
 
@@ -190,21 +218,28 @@ class MainApplication(Frame):
         #    self.__drawPoint(1, [x, y], 'go')
 
     def train(self, event):
-        x = np.arange(0, 1, 0.1)
-        y = np.cos(2*np.pi*x)
-        self.rbfn = RBFNetwork(2)
-        self.output = self.rbfn.fit(np.array([[x[i], y[i]] for i in range(len(x))]))
+        exec(self.inputSection.options[self.inputSection.key.get()])
+        data = self.xdata
 
-        print ('SALIDA:')
-        print(self.output)
+        if self.tGraphSection.line2 is not None:
+            self.tGraphSection.line2.remove(0)
 
-        for i in range(len(self.output)):
-            self.adaline.xdata.append(self.output[i])
-            self.adaline.output.append(y[i])
+        # Declare RBF Network and Adaline
+        self.rbfn = RBFNetwork(self.inputSection.clusters)
+        self.adaline = Adaline(self.inputSection.clusters)
+        self.adaline.data = self.rbfn.train(data)
+        self.adaline.output = self.ydata
         self.adaline.train(self.inputSection.learningRate, self.inputSection.epochsMax, self.inputSection.targetError)
 
-        X, Y, Z = axes3d.get_test_data(0.05)
-        ax = self.tGraphSection.ax
+        # Plot function
+        self.tGraphSection.ax.plot(self.xdata, self.adaline.z, label='RBF')
+        self.tGraphSection.canvas.draw()
+        self.tGraphSection.ax.lines[1].remove()
+
+        # Plot error
+        x = range(len(self.adaline.avgErrors[1:]))
+        y = self.adaline.avgErrors[1:]
+        self.eGraphSection.drawLine(x, y)
 
     def __formatCoord(self, event):
         coord3D = {}
@@ -236,6 +271,7 @@ class MainApplication(Frame):
 
 root = Tk()
 mainApp = MainApplication(root)
+mainApp.start(True)
 mainApp.pack(side="top", fill="both", expand=True)
-mainApp.tGraphSection.fig.canvas.mpl_connect('button_release_event', mainApp.onclick)
+#mainApp.tGraphSection.fig.canvas.mpl_connect('button_release_event', mainApp.onclick)
 root.mainloop()
